@@ -56,13 +56,6 @@ type vsaStageMedianResponse struct {
 	Value float64 `json:"value"` // seconds
 }
 
-// vsaSummaryResponse represents a Value Stream summary record.
-type vsaSummaryResponse struct {
-	Value      float64 `json:"value"`
-	Unit       string  `json:"unit,omitempty"`
-	Identifier string  `json:"identifier,omitempty"`
-}
-
 // vsaValueStreamResponse represents a value stream object.
 type vsaValueStreamResponse struct {
 	ID   int    `json:"id"`

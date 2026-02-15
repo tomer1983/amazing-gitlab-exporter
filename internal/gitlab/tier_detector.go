@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -202,16 +201,4 @@ func tierName(tier int) string {
 	}
 }
 
-// lastUpdatedTimes is a small helper used by the scheduler to track the last
-// fetch time per project so incremental fetching (updatedAfter) works.
-type lastUpdatedTimes struct {
-	pipelines    map[int]time.Time
-	mergeRequests map[int]time.Time
-}
 
-func newLastUpdatedTimes() *lastUpdatedTimes {
-	return &lastUpdatedTimes{
-		pipelines:     make(map[int]time.Time),
-		mergeRequests: make(map[int]time.Time),
-	}
-}
