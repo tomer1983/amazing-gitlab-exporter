@@ -196,8 +196,8 @@ func discoverProjects(ctx context.Context, cfg *config.Config, client *gitlabcli
 	// Wildcard expansion.
 	for _, wc := range cfg.Wildcards {
 		opts := &gitlab.ListProjectsOptions{
-			Search:   gitlab.Ptr(wc.Search),
-			Archived: gitlab.Ptr(wc.Archived),
+			Search:      gitlab.Ptr(wc.Search),
+			Archived:    gitlab.Ptr(wc.Archived),
 			ListOptions: gitlab.ListOptions{PerPage: 100, Page: 1},
 		}
 		for {

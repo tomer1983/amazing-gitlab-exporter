@@ -55,7 +55,7 @@ gitlab:
   token: ""
 
   # Verify TLS certificates when connecting to GitLab.
-  enable_tls_verify: true
+  enable_tls_verify: false
 
   # Path to custom CA certificate bundle (PEM format).
   # Useful for self-hosted GitLab instances with private CAs.
@@ -125,7 +125,7 @@ collectors:
   # Test report metrics (Free tier)
   # Exports: age_test_report_*, age_test_suite_*, age_test_case_*
   test_reports:
-    enabled: false
+    enabled: true
     interval_seconds: 60
     # Enable individual test case metrics (high cardinality).
     include_test_cases: false
@@ -214,13 +214,13 @@ project_defaults:
 # List specific projects to monitor. Use the full path (group/project).
 # Each project can override any setting from project_defaults.
 projects:
-  - name: my-group/my-project
+  # - name: lab5390433/my-grafana-plugins
     # Override ref config for this project:
     # refs:
     #   branches:
     #     regexp: "^main$"
 
-  - name: my-group/another-project
+  - name: lab5390433/my-grafana-plugins
     refs:
       branches:
         regexp: "^(main|develop)$"
@@ -230,14 +230,14 @@ projects:
 # ─── Wildcard Project Discovery ─────────────────────────────────────────────────
 # Discover projects automatically by group/user ownership.
 # Each wildcard entry can override project_defaults.
-wildcards:
+wildcards: []
   # Monitor all projects in a group (including subgroups).
-  - owner:
-      name: my-group
-      kind: group              # group or user
-      include_subgroups: true
-    search: ""                 # Optional: filter projects by search term
-    archived: false            # Whether to include archived projects
+  # - owner:
+  #     name: my-group
+  #     kind: group              # group or user
+  #     include_subgroups: true
+  #   search: ""                 # Optional: filter projects by search term
+  #   archived: false            # Whether to include archived projects
     # Override defaults for discovered projects:
     # refs:
     #   branches:
