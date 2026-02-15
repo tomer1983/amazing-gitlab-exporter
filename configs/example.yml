@@ -1,0 +1,251 @@
+# amazing-gitlab-exporter - Full Example Configuration
+#
+# This file demonstrates all available configuration options with their
+# default values and detailed comments. Copy this file and customize
+# for your environment.
+#
+# Configuration priority: CLI flags > Environment variables > Config file > Defaults
+# Environment variables use the AGE_ prefix (e.g., AGE_GITLAB_TOKEN).
+
+# ─── Logging ────────────────────────────────────────────────────────────────────
+log:
+  # Log verbosity level.
+  # Options: trace, debug, info, warn, error, fatal, panic
+  level: info
+
+  # Log output format.
+  # Options: text (human-readable), json (structured)
+  format: text
+
+# ─── HTTP Server ────────────────────────────────────────────────────────────────
+server:
+  # Address and port the exporter listens on for /metrics, /health, /ready.
+  listen_address: ":8080"
+
+  # Enable Go pprof profiling endpoints at /debug/pprof/*.
+  enable_pprof: false
+
+  # GitLab webhook receiver for real-time pipeline events.
+  webhook:
+    enabled: false
+    # Secret token to validate incoming webhook payloads (X-Gitlab-Token header).
+    secret_token: ""
+
+# ─── Redis (High Availability) ──────────────────────────────────────────────────
+# Leave empty or omit for single-instance mode (in-memory store).
+# Configure Redis when running multiple exporter replicas.
+redis:
+  # Redis connection URL.
+  # Format: redis://[user:password@]host:port/db
+  url: ""
+
+  # Maximum number of connections in the pool.
+  pool_size: 10
+
+  # Minimum number of idle connections maintained.
+  min_idle_conns: 1
+
+# ─── GitLab Connection ──────────────────────────────────────────────────────────
+gitlab:
+  # GitLab instance URL (SaaS or self-hosted).
+  url: "https://gitlab.com"
+
+  # Personal Access Token with 'api' and 'read_repository' scopes.
+  # Recommended: set via AGE_GITLAB_TOKEN environment variable.
+  token: ""
+
+  # Verify TLS certificates when connecting to GitLab.
+  enable_tls_verify: true
+
+  # Path to custom CA certificate bundle (PEM format).
+  # Useful for self-hosted GitLab instances with private CAs.
+  ca_cert_path: ""
+
+  # Sustained requests per second to GitLab API.
+  # GitLab SaaS free tier: 10 req/s. Self-hosted may differ.
+  max_requests_per_second: 10
+
+  # Maximum burst of requests allowed above the sustained rate.
+  burst_requests_per_second: 20
+
+  # Use GraphQL API for batch queries (reduces API calls by 60-70%).
+  use_graphql: true
+
+  # Number of items per GraphQL page.
+  graphql_page_size: 100
+
+  # Number of items per REST API page.
+  rest_page_size: 100
+
+# ─── Collectors ─────────────────────────────────────────────────────────────────
+# Each collector can be independently enabled/disabled and configured.
+# Tier-dependent collectors (DORA, Value Stream) are auto-disabled if
+# the GitLab instance does not support them.
+collectors:
+  # Pipeline metrics (Free tier)
+  # Exports: age_pipeline_duration_seconds, age_pipeline_status,
+  #          age_pipeline_run_count, age_pipeline_queued_duration_seconds,
+  #          age_pipeline_coverage, age_child_pipeline_*
+  pipelines:
+    enabled: true
+    interval_seconds: 30
+    # Track child (triggered / parent-child) pipelines.
+    include_child_pipelines: true
+    # Histogram bucket boundaries for duration metrics (seconds).
+    histogram_buckets: [5, 10, 30, 60, 120, 300, 600, 1800, 3600]
+    # Maximum number of pipelines to keep per ref.
+    max_pipelines_per_ref: 10
+
+  # Job metrics (Free tier)
+  # Exports: age_job_duration_seconds, age_job_status, age_job_run_count,
+  #          age_job_queued_duration_seconds, age_job_artifact_size_bytes
+  jobs:
+    enabled: true
+    interval_seconds: 30
+    histogram_buckets: [5, 10, 30, 60, 120, 300, 600, 1800]
+    # Include runner type labels (instance, group, project).
+    include_runner_details: true
+
+  # Merge request analytics (Free + Premium)
+  # Exports: age_mr_time_to_merge_seconds, age_mr_throughput_count,
+  #          age_mr_review_cycles_count, age_mr_changes_count, age_mr_status
+  merge_requests:
+    enabled: true
+    interval_seconds: 120
+    histogram_buckets: [3600, 7200, 14400, 28800, 86400, 172800, 604800]
+
+  # Environment/deployment metrics (Free tier)
+  # Exports: age_environment_deployment_duration_seconds,
+  #          age_environment_deployment_status, age_environment_deployment_count
+  environments:
+    enabled: false
+    interval_seconds: 300
+    exclude_stopped: true
+
+  # Test report metrics (Free tier)
+  # Exports: age_test_report_*, age_test_suite_*, age_test_case_*
+  test_reports:
+    enabled: false
+    interval_seconds: 60
+    # Enable individual test case metrics (high cardinality).
+    include_test_cases: false
+
+  # DORA metrics (Ultimate tier only)
+  # Exports: age_dora_deployment_frequency, age_dora_lead_time_for_changes_seconds,
+  #          age_dora_time_to_restore_service_seconds, age_dora_change_failure_rate
+  # Automatically disabled if the GitLab instance does not support DORA.
+  dora:
+    enabled: true
+    interval_seconds: 3600
+    # Environment tiers to collect DORA metrics for.
+    environment_tiers:
+      - production
+      - staging
+
+  # Value Stream Analytics (Premium tier)
+  # Exports: age_value_stream_stage_duration_seconds,
+  #          age_value_stream_cycle_time_seconds, age_value_stream_lead_time_seconds
+  # Automatically disabled if the GitLab instance does not support VSA.
+  value_stream:
+    enabled: true
+    interval_seconds: 3600
+
+  # Code review analytics (Premium tier)
+  # Exports: age_review_turnaround_seconds, age_review_approval_count,
+  #          age_review_pending_count, age_review_requested_count
+  code_review:
+    enabled: true
+    interval_seconds: 300
+
+  # Repository analytics (Free tier)
+  # Exports: age_repository_language_percentage, age_repository_commit_count,
+  #          age_repository_size_bytes, age_repository_coverage
+  repository:
+    enabled: true
+    interval_seconds: 3600
+
+  # Contributor analytics (Free tier)
+  # Exports: age_contributor_commits_count, age_contributor_additions,
+  #          age_contributor_deletions
+  contributors:
+    enabled: false
+    interval_seconds: 3600
+
+# ─── Project Defaults ───────────────────────────────────────────────────────────
+# Default settings applied to all projects. Individual projects and wildcards
+# can override any of these values.
+project_defaults:
+  # Only emit the current status label for pipeline/job status metrics,
+  # rather than emitting a 0 for every other status. Reduces cardinality.
+  output_sparse_status_metrics: true
+
+  refs:
+    branches:
+      enabled: true
+      # Regex to match branch names. Only matching branches are tracked.
+      regexp: "^(main|master|develop|release/.*)$"
+      # Limit to the N most recently updated branches (0 = all matching).
+      most_recent: 0
+      # Ignore branches not updated in N days (0 = no limit).
+      max_age_days: 0
+      # Exclude deleted branches from metrics.
+      exclude_deleted: true
+
+    tags:
+      enabled: true
+      # Regex to match tag names.
+      regexp: "^v.*"
+      # Limit to the N most recent tags.
+      most_recent: 10
+      # Ignore tags older than N days.
+      max_age_days: 90
+      exclude_deleted: true
+
+    merge_requests:
+      enabled: true
+      # MR states to track: opened, closed, merged, all
+      states: [opened, merged]
+      # Limit to N most recent MRs.
+      most_recent: 20
+      # Ignore MRs not updated in N days.
+      max_age_days: 30
+
+# ─── Explicit Projects ─────────────────────────────────────────────────────────
+# List specific projects to monitor. Use the full path (group/project).
+# Each project can override any setting from project_defaults.
+projects:
+  - name: my-group/my-project
+    # Override ref config for this project:
+    # refs:
+    #   branches:
+    #     regexp: "^main$"
+
+  - name: my-group/another-project
+    refs:
+      branches:
+        regexp: "^(main|develop)$"
+      tags:
+        enabled: false
+
+# ─── Wildcard Project Discovery ─────────────────────────────────────────────────
+# Discover projects automatically by group/user ownership.
+# Each wildcard entry can override project_defaults.
+wildcards:
+  # Monitor all projects in a group (including subgroups).
+  - owner:
+      name: my-group
+      kind: group              # group or user
+      include_subgroups: true
+    search: ""                 # Optional: filter projects by search term
+    archived: false            # Whether to include archived projects
+    # Override defaults for discovered projects:
+    # refs:
+    #   branches:
+    #     regexp: "^main$"
+
+  # Monitor all projects belonging to a specific user.
+  # - owner:
+  #     name: my-username
+  #     kind: user
+  #     include_subgroups: false
+  #   archived: false

@@ -1,0 +1,44 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+amazing-gitlab-exporter
+/dist/
+
+# Test output
+*.test
+*.out
+coverage.txt
+coverage.html
+coverage.xml
+
+# Dependency directories
+vendor/
+
+# IDE / editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+/bin/
+/build/
+
+# GoReleaser
+/dist/
+
+# Temporary files
+*.tmp
+*.bak
+*.log

@@ -1,0 +1,17 @@
+# amazing-gitlab-exporter - Minimal Configuration
+#
+# The simplest configuration to get started. Only requires the GitLab URL
+# and a personal access token.
+#
+# For all available options, see configs/example.yml.
+
+gitlab:
+  url: "https://gitlab.com"
+  # Set via AGE_GITLAB_TOKEN environment variable for security.
+  token: ""
+
+wildcards:
+  - owner:
+      name: my-group
+      kind: group
+      include_subgroups: true
