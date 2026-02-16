@@ -1,0 +1,81 @@
+{{- if .Values.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "amazing-gitlab-exporter.fullname" . }}
+  namespace: {{ .Values.prometheusRule.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "amazing-gitlab-exporter.labels" . | nindent 4 }}
+    {{- with .Values.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: amazing-gitlab-exporter
+      {{- if .Values.prometheusRule.rules }}
+      rules:
+        {{- toYaml .Values.prometheusRule.rules | nindent 8 }}
+      {{- else }}
+      rules:
+        - alert: ExporterDown
+          expr: up{job="{{ include "amazing-gitlab-exporter.fullname" . }}"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Amazing GitLab Exporter is down"
+            description: "The exporter instance {{ "{{" }} $labels.instance {{ "}}" }} has been down for more than 5 minutes."
+
+        - alert: HighGitLabAPIErrors
+          expr: rate(gitlab_api_errors_total{job="{{ include "amazing-gitlab-exporter.fullname" . }}"}[5m]) > 0.1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High GitLab API error rate"
+            description: "GitLab API error rate is above 0.1/s for the last 10 minutes on {{ "{{" }} $labels.instance {{ "}}" }}."
+
+        - alert: PipelineFailureRateHigh
+          expr: |
+            (
+              sum(rate(gitlab_ci_pipeline_status{status="failed"}[1h]))
+              /
+              sum(rate(gitlab_ci_pipeline_status[1h]))
+            ) > 0.3
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High pipeline failure rate"
+            description: "More than 30% of pipelines have failed in the last 30 minutes."
+
+        - alert: ScrapeDurationHigh
+          expr: scrape_duration_seconds{job="{{ include "amazing-gitlab-exporter.fullname" . }}"} > 30
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Scrape duration is high"
+            description: "Scrape duration for {{ "{{" }} $labels.instance {{ "}}" }} exceeds 30s for 5 minutes."
+
+        - alert: RateLimitNearExhaustion
+          expr: gitlab_api_rate_limit_remaining{job="{{ include "amazing-gitlab-exporter.fullname" . }}"} < 100
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "GitLab API rate limit nearly exhausted"
+            description: "Remaining rate limit on {{ "{{" }} $labels.instance {{ "}}" }} is below 100."
+
+        - alert: HighMemoryUsage
+          expr: |
+            container_memory_working_set_bytes{container="{{ include "amazing-gitlab-exporter.name" . }}"}
+            / container_spec_memory_limit_bytes{container="{{ include "amazing-gitlab-exporter.name" . }}"} > 0.9
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High memory usage"
+            description: "Memory usage for {{ "{{" }} $labels.pod {{ "}}" }} exceeds 90% of its limit."
+      {{- end }}
+{{- end }}

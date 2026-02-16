@@ -1,0 +1,155 @@
+# CI Values: Full — All features enabled simultaneously
+# Validates: Every feature flag is turned on for maximum template coverage
+replicaCount: 3
+
+gitlabToken: "glpat-test-token-for-ci"
+webhookSecretToken: "test-webhook-secret"
+
+exporterConfig:
+  gitlab_url: "https://gitlab.example.com"
+  projects:
+    - "my-group/my-project"
+    - "my-group/another-project"
+  collection_interval: 300
+
+serviceAccount:
+  create: true
+  automountServiceAccountToken: false
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/test"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+    scaleUp:
+      stabilizationWindowSeconds: 60
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: exporter.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: exporter-tls
+      hosts:
+        - exporter.example.com
+
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+
+prometheus:
+  enabled: true
+  server:
+    persistentVolume:
+      enabled: false
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  alertmanager:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+
+grafana:
+  enabled: true
+  persistence:
+    enabled: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+
+serviceMonitor:
+  enabled: true
+  interval: 15s
+  scrapeTimeout: 10s
+  labels:
+    release: prometheus
+
+prometheusRule:
+  enabled: true
+  labels:
+    release: prometheus
+
+grafanaDashboards:
+  enabled: true
+  labels:
+    grafana_dashboard: "1"
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels: {}

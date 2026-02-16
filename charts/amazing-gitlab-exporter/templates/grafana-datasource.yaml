@@ -1,0 +1,29 @@
+{{- if and .Values.grafana.enabled (or .Values.prometheus.enabled .Values.externalPrometheus.url) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "amazing-gitlab-exporter.fullname" . }}-grafana-datasource
+  namespace: {{ .Release.Namespace | default "amazing-gitlab-exporter" }}
+  labels:
+    {{- include "amazing-gitlab-exporter.labels" . | nindent 4 }}
+    {{- if .Values.grafana.sidecar.datasources.enabled }}
+    {{ .Values.grafana.sidecar.datasources.label }}: {{ .Values.grafana.sidecar.datasources.labelValue | quote }}
+    {{- end }}
+data:
+  datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        {{- if .Values.prometheus.enabled }}
+        url: http://{{ .Release.Name }}-prometheus-server:{{ .Values.prometheus.server.service.servicePort | default 80 }}
+        {{- else }}
+        url: {{ .Values.externalPrometheus.url }}
+        {{- end }}
+        isDefault: true
+        editable: false
+        jsonData:
+          timeInterval: "30s"
+          httpMethod: "POST"
+{{- end }}

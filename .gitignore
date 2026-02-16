@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-amazing-gitlab-exporter
+/amazing-gitlab-exporter
 /dist/
 
 # Test output

@@ -20,12 +20,13 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.26"
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v4
         with:
           version: latest
+          install-mode: goinstall
           args: --timeout=5m
 
   test:
@@ -38,7 +39,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.26"
 
       - name: Download dependencies
         run: go mod download

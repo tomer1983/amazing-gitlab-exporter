@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "amazing-gitlab-exporter.fullname" . }}-test-connection"
+  namespace: {{ .Release.Namespace | default "amazing-gitlab-exporter" }}
+  labels:
+    {{- include "amazing-gitlab-exporter.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: wget
+      image: busybox:1.36
+      command: ['wget']
+      args:
+        - '--spider'
+        - '--timeout=5'
+        - 'http://{{ include "amazing-gitlab-exporter.fullname" . }}:{{ .Values.service.port }}/health'
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 65534
+        capabilities:
+          drop: [ALL]

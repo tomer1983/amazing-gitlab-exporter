@@ -1,0 +1,168 @@
+suite: Deployment
+templates:
+  - templates/deployment.yaml
+values:
+  - ../ci/default-values.yaml
+tests:
+  - it: should create a Deployment
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-amazing-gitlab-exporter
+
+  - it: should set correct default image
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: "ghcr\\.io/tomer1983/amazing-gitlab-exporter:"
+
+  - it: should use custom image tag
+    set:
+      image.tag: "2.0.0"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "ghcr.io/tomer1983/amazing-gitlab-exporter:2.0.0"
+
+  - it: should prefer image digest over tag
+    set:
+      image.digest: "sha256:abcdef1234567890"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "ghcr.io/tomer1983/amazing-gitlab-exporter@sha256:abcdef1234567890"
+
+  - it: should set correct replica count
+    set:
+      replicaCount: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  - it: should not set replicas when autoscaling enabled
+    set:
+      autoscaling.enabled: true
+    asserts:
+      - isNull:
+          path: spec.replicas
+
+  - it: should inject GitLab token from secret
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: AGE_GITLAB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: RELEASE-NAME-amazing-gitlab-exporter
+                key: gitlab-token
+
+  - it: should inject Redis URL when Redis enabled
+    set:
+      redis.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: AGE_REDIS_URL
+            value: "redis://:@RELEASE-NAME-redis-master:6379/0"
+
+  - it: should mount config volume
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config
+            mountPath: /etc/age/config.yml
+            subPath: config.yml
+            readOnly: true
+
+  - it: should set security context
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          value: true
+
+  - it: should set pod security context
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+
+  - it: should set resource limits
+    set:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 100m
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 256Mi
+
+  - it: should set liveness probe
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /health
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: http
+
+  - it: should set readiness probe
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /ready
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: http
+
+  - it: should set pod annotations
+    set:
+      podAnnotations:
+        prometheus.io/scrape: "true"
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+
+  - it: should set node selector
+    set:
+      nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+
+  - it: should set tolerations
+    set:
+      tolerations:
+        - key: "key1"
+          operator: "Equal"
+          value: "value1"
+          effect: "NoSchedule"
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: "key1"
+            operator: "Equal"
+            value: "value1"
+            effect: "NoSchedule"

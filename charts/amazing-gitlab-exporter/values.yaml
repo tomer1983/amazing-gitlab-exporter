@@ -1,0 +1,383 @@
+# amazing-gitlab-exporter Helm Chart — Default Values
+# https://github.com/tomer1983/amazing-gitlab-exporter
+#
+# For full configuration reference, see configs/example.yml in the project repo.
+
+# -- Override the chart name
+nameOverride: ""
+# -- Override the full release name
+fullnameOverride: ""
+
+# ─── Image ──────────────────────────────────────────────────────────────────────
+image:
+  # -- Container image repository
+  repository: ghcr.io/tomer1983/amazing-gitlab-exporter
+  # -- Image tag (defaults to Chart.AppVersion)
+  tag: ""
+  # -- Image digest (overrides tag when set)
+  digest: ""
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+
+# -- Image pull secrets for private registries
+imagePullSecrets: []
+
+# ─── Replicas & Scaling ────────────────────────────────────────────────────────
+# -- Number of exporter replicas (enable redis for >1)
+replicaCount: 1
+
+autoscaling:
+  # -- Enable HorizontalPodAutoscaler
+  enabled: false
+  # -- Minimum number of replicas
+  minReplicas: 2
+  # -- Maximum number of replicas
+  maxReplicas: 5
+  # -- Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 80
+  # -- Target memory utilization percentage
+  targetMemoryUtilizationPercentage: 80
+  # -- HPA scaling behavior configuration
+  behavior: {}
+
+# ─── Service Account ───────────────────────────────────────────────────────────
+serviceAccount:
+  # -- Create a ServiceAccount
+  create: true
+  # -- ServiceAccount name (auto-generated if empty)
+  name: ""
+  # -- Annotations for the ServiceAccount (e.g., for IRSA/Workload Identity)
+  annotations: {}
+  # -- Mount the ServiceAccount token
+  automountServiceAccountToken: false
+
+# ─── Pod Configuration ─────────────────────────────────────────────────────────
+# -- Extra annotations for pods
+podAnnotations: {}
+# -- Extra labels for pods
+podLabels: {}
+
+# -- Pod-level security context (Restricted PSS compliant)
+podSecurityContext:
+  runAsNonRoot: true
+  fsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container-level security context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop: [ALL]
+
+# ─── Resources ─────────────────────────────────────────────────────────────────
+# -- CPU/memory resource requests and limits
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# ─── Service ───────────────────────────────────────────────────────────────────
+service:
+  # -- Service type
+  type: ClusterIP
+  # -- Service port (metrics endpoint)
+  port: 8080
+  # -- Extra annotations for the Service
+  annotations: {}
+
+# ─── Ingress (Kubernetes) ──────────────────────────────────────────────────────
+ingress:
+  # -- Enable Kubernetes Ingress
+  enabled: false
+  # -- Ingress class name (e.g., nginx, traefik)
+  className: ""
+  # -- Ingress annotations
+  annotations: {}
+  # -- Ingress host rules
+  hosts:
+    - host: age.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  # -- Ingress TLS configuration
+  tls: []
+
+# ─── Route (OpenShift) ─────────────────────────────────────────────────────────
+route:
+  # -- Enable OpenShift Route
+  enabled: false
+  # -- Route hostname (auto-assigned if empty)
+  host: ""
+  # -- Route path
+  path: /
+  # -- TLS termination settings
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  # -- Route annotations
+  annotations: {}
+
+# ─── Probes ────────────────────────────────────────────────────────────────────
+# -- Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# -- Readiness probe configuration
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# ─── Scheduling ────────────────────────────────────────────────────────────────
+# -- Node selector labels
+nodeSelector: {}
+# -- Tolerations for pod scheduling
+tolerations: []
+# -- Affinity rules for pod scheduling
+affinity: {}
+# -- Topology spread constraints for HA
+topologySpreadConstraints: []
+# -- Priority class name
+priorityClassName: ""
+
+# ─── Disruption Budget ─────────────────────────────────────────────────────────
+podDisruptionBudget:
+  # -- Enable PodDisruptionBudget
+  enabled: false
+  # -- Minimum available pods
+  minAvailable: 1
+  # -- Maximum unavailable pods (alternative to minAvailable)
+  # maxUnavailable: 1
+
+# ─── Network Policy ───────────────────────────────────────────────────────────
+networkPolicy:
+  # -- Enable NetworkPolicy
+  enabled: false
+  # -- Ingress rules (default: allow from monitoring namespace)
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 8080
+          protocol: TCP
+  # -- Egress rules (empty = allow all)
+  egress: []
+
+# ─── Exporter Configuration ───────────────────────────────────────────────────
+# Rendered into a ConfigMap and mounted at /etc/age/config.yml.
+# Sensitive values (token) are injected via environment variables from Secrets.
+# See configs/example.yml for full documentation of all options.
+exporterConfig:
+  log:
+    level: info
+    format: json
+  server:
+    listen_address: ":8080"
+    webhook:
+      enabled: false
+  gitlab:
+    url: "https://gitlab.com"
+    # token is injected from Secret via AGE_GITLAB_TOKEN env var
+    max_requests_per_second: 10
+    use_graphql: true
+  collectors:
+    pipelines:
+      enabled: true
+      interval_seconds: 30
+    jobs:
+      enabled: true
+      interval_seconds: 30
+    merge_requests:
+      enabled: true
+      interval_seconds: 120
+    test_reports:
+      enabled: true
+      interval_seconds: 60
+    dora:
+      enabled: true
+      interval_seconds: 3600
+    repository:
+      enabled: true
+      interval_seconds: 3600
+  projects: []
+  wildcards: []
+
+# ─── Secrets ───────────────────────────────────────────────────────────────────
+# Option A: Chart-managed Secret (set these values)
+# -- GitLab personal access token (stored in Secret)
+gitlabToken: ""
+# -- Webhook secret token for validating GitLab webhook payloads
+webhookSecretToken: ""
+
+# Option B: Use a pre-existing Secret
+existingSecret:
+  # -- Name of existing Secret containing credentials
+  name: ""
+  # -- Key in the Secret containing the GitLab token
+  gitlabTokenKey: "gitlab-token"
+  # -- Key in the Secret containing the webhook secret
+  webhookSecretKey: "webhook-secret"
+
+# ─── Extra Env / Volumes ──────────────────────────────────────────────────────
+# -- Additional environment variables for the exporter container
+extraEnv: []
+# -- Additional envFrom sources
+extraEnvFrom: []
+# -- Additional volumes for the pod
+extraVolumes: []
+# -- Additional volume mounts for the exporter container
+extraVolumeMounts: []
+# -- Additional command-line arguments
+extraArgs: []
+
+# ─── Redis Sub-chart ──────────────────────────────────────────────────────────
+# Enable for HA mode (multiple replicas with shared state).
+# See https://github.com/bitnami/charts/tree/main/bitnami/redis for all options.
+redis:
+  # -- Deploy Redis sub-chart
+  enabled: false
+  architecture: standalone
+  auth:
+    enabled: true
+    password: ""
+  master:
+    persistence:
+      size: 1Gi
+
+# ─── External Redis ──────────────────────────────────────────────────────────
+externalRedis:
+  # -- External Redis connection URL (redis://[user:password@]host:port/db)
+  url: ""
+
+# ─── Prometheus Sub-chart (Full-Stack Mode) ───────────────────────────────────
+# Deploys a standalone Prometheus server pre-configured to scrape the exporter.
+# If you already have Prometheus, use serviceMonitor.enabled instead.
+# See https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus
+prometheus:
+  # -- Deploy Prometheus sub-chart
+  enabled: false
+  server:
+    retention: "30d"
+    persistentVolume:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+    extraFlags:
+      - web.enable-lifecycle
+  # Disable components for a lightweight deployment
+  alertmanager:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  # Scrape config — auto-populated by the chart's prometheus-configmap template
+  serverFiles:
+    prometheus.yml:
+      scrape_configs: []
+
+# ─── Grafana Sub-chart (Full-Stack Mode) ──────────────────────────────────────
+# Deploys Grafana pre-provisioned with Prometheus datasource and all dashboards.
+# If you already have Grafana, use grafanaDashboards.enabled instead.
+# See https://github.com/grafana/helm-charts/tree/main/charts/grafana
+grafana:
+  # -- Deploy Grafana sub-chart
+  enabled: false
+  adminUser: admin
+  adminPassword: admin
+  persistence:
+    enabled: true
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      folderAnnotation: grafana_folder
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+  datasources: {}
+  grafana.ini:
+    users:
+      allow_sign_up: false
+    auth.anonymous:
+      enabled: false
+
+# ─── External Prometheus (for Grafana datasource) ────────────────────────────
+# Used when grafana.enabled=true but prometheus.enabled=false.
+externalPrometheus:
+  # -- External Prometheus URL for Grafana datasource
+  url: ""
+
+# ─── Monitoring (for existing Prometheus Operator stacks) ─────────────────────
+serviceMonitor:
+  # -- Create a Prometheus Operator ServiceMonitor
+  enabled: false
+  # -- Namespace to deploy the ServiceMonitor into
+  namespace: ""
+  # -- Scrape interval
+  interval: 30s
+  # -- Scrape timeout
+  scrapeTimeout: 10s
+  # -- Extra labels for the ServiceMonitor
+  labels: {}
+  # -- Relabeling rules
+  relabelings: []
+  # -- Metric relabeling rules
+  metricRelabelings: []
+
+prometheusRule:
+  # -- Create Prometheus alerting rules
+  enabled: false
+  # -- Namespace to deploy the PrometheusRule into
+  namespace: ""
+  # -- Extra labels for the PrometheusRule
+  labels: {}
+  # -- Custom rules (overrides defaults when non-empty)
+  rules: []
+
+grafanaDashboards:
+  # -- Create Grafana dashboard ConfigMaps (auto-enabled when grafana.enabled=true)
+  enabled: false
+  # -- Labels for dashboard ConfigMaps (for sidecar discovery)
+  labels:
+    grafana_dashboard: "1"
+  # -- Annotations for dashboard ConfigMaps
+  annotations: {}
+  # -- Namespace to deploy dashboard ConfigMaps into
+  namespace: ""

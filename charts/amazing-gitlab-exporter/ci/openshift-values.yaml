@@ -1,0 +1,37 @@
+# CI Values: OpenShift
+# Validates: Route, no hardcoded UID, restricted SCC compatibility
+gitlabToken: "glpat-test-token-for-ci"
+
+exporterConfig:
+  gitlab_url: "https://gitlab.example.com"
+  projects:
+    - "my-group/my-project"
+  collection_interval: 300
+
+route:
+  enabled: true
+  host: "exporter.apps.example.com"
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+
+# OpenShift assigns UID — do not hardcode
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop: [ALL]
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

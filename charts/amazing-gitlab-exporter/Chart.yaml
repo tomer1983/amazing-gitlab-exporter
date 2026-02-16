@@ -1,0 +1,70 @@
+apiVersion: v2
+name: amazing-gitlab-exporter
+description: A Helm chart for deploying the Amazing GitLab Exporter — a Prometheus exporter for GitLab CI/CD analytics
+type: application
+version: 1.0.0
+appVersion: "v1.0.1"
+kubeVersion: ">=1.25.0-0"
+
+home: https://github.com/tomer1983/amazing-gitlab-exporter
+icon: https://raw.githubusercontent.com/tomer1983/amazing-gitlab-exporter/main/docs/logo.png
+sources:
+  - https://github.com/tomer1983/amazing-gitlab-exporter
+
+maintainers:
+  - name: tomer1983
+    url: https://github.com/tomer1983
+
+keywords:
+  - gitlab
+  - prometheus
+  - exporter
+  - ci-cd
+  - pipelines
+  - dora
+  - metrics
+  - monitoring
+  - grafana
+  - openshift
+
+dependencies:
+  - name: redis
+    version: "~19.6.0"
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: redis.enabled
+
+  - name: prometheus
+    version: "~25.27.0"
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus.enabled
+
+  - name: grafana
+    version: "~8.6.0"
+    repository: https://grafana.github.io/helm-charts
+    condition: grafana.enabled
+
+annotations:
+  artifacthub.io/category: monitoring-logging
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/operator: "false"
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/signKey: ""
+  artifacthub.io/changes: |
+    - kind: added
+      description: Initial Helm chart release
+    - kind: added
+      description: Kubernetes and OpenShift deployment support
+    - kind: added
+      description: Optional Prometheus, Grafana, and Redis sub-charts
+    - kind: added
+      description: ServiceMonitor, PrometheusRule, and Grafana dashboard ConfigMaps
+    - kind: added
+      description: OpenShift Route support
+    - kind: added
+      description: NetworkPolicy, PDB, and HPA templates
+    - kind: added
+      description: JSON Schema validation for values
+    - kind: added
+      description: helm-unittest test suites
+
+

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 
@@ -42,8 +43,8 @@ func NewServer(cfg *config.Config, registry *collector.Registry, logger *logrus.
 	promRegistry := prometheus.NewRegistry()
 	promRegistry.MustRegister(registry)
 	// Also register default Go and process collectors.
-	promRegistry.MustRegister(prometheus.NewGoCollector())
-	promRegistry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
+	promRegistry.MustRegister(collectors.NewGoCollector())
+	promRegistry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 
 	mux.Handle("/metrics", promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{
 		EnableOpenMetrics: true,
