@@ -6,7 +6,7 @@ require (
 	github.com/go-playground/validator/v10 v10.22.1
 	github.com/hasura/go-graphql-client v0.13.1
 	github.com/prometheus/client_golang v1.20.5
-	github.com/redis/go-redis/v9 v9.7.0
+	github.com/redis/go-redis/v9 v9.7.3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli/v3 v3.0.0-beta1
 	gitlab.com/gitlab-org/api/client-go v0.118.0
@@ -33,10 +33,10 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	golang.org/x/crypto v0.24.0 // indirect
-	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/oauth2 v0.21.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/oauth2 v0.27.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/protobuf v1.36.0 // indirect
 )
