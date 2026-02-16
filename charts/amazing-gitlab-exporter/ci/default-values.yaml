@@ -2,8 +2,55 @@
 # Validates: Basic single-replica deployment with minimum configuration
 gitlabToken: "glpat-test-token-for-ci"
 
+# Skip checksums for unit testing
+unittest: true
+
 exporterConfig:
   gitlab_url: "https://gitlab.example.com"
   projects:
     - "my-group/my-project"
   collection_interval: 300
+
+# Security context
+podSecurityContext:
+  runAsNonRoot: true
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# Health probes
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+
+# Node selector
+nodeSelector:
+  disktype: ssd
+
+# Tolerations
+tolerations:
+  - key: "key1"
+    operator: "Equal"
+    value: "value1"
+    effect: "NoSchedule"
