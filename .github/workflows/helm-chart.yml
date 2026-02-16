@@ -35,7 +35,7 @@ jobs:
       - name: Lint chart
         run: |
           helm lint charts/amazing-gitlab-exporter \
-            --set secrets.gitlabToken=test \
+            --set gitlabToken=test \
             --set exporterConfig.gitlab_url=https://gitlab.com \
             --set 'exporterConfig.projects={test/proj}'
 
@@ -109,6 +109,15 @@ jobs:
 
       - name: Install helm-unittest plugin
         run: helm plugin install https://github.com/helm-unittest/helm-unittest
+
+      - name: Add Helm repositories
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+
+      - name: Build dependencies
+        run: helm dependency build charts/amazing-gitlab-exporter
 
       - name: Run unit tests
         run: helm unittest charts/amazing-gitlab-exporter --color
