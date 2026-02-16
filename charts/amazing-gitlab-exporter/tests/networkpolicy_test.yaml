@@ -2,7 +2,7 @@ suite: NetworkPolicy
 templates:
   - templates/networkpolicy.yaml
 values:
-  - ci/default-values.yaml
+  - ../ci/default-values.yaml
 tests:
   - it: should not create NetworkPolicy by default
     asserts:

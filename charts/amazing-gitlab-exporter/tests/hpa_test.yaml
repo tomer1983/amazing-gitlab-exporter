@@ -2,7 +2,7 @@ suite: HPA
 templates:
   - templates/hpa.yaml
 values:
-  - ci/default-values.yaml
+  - ../ci/default-values.yaml
 tests:
   - it: should not create HPA by default
     asserts:

@@ -2,7 +2,7 @@ suite: Deployment
 templates:
   - templates/deployment.yaml
 values:
-  - ci/default-values.yaml
+  - ../ci/default-values.yaml
 tests:
   - it: should create a Deployment
     asserts:

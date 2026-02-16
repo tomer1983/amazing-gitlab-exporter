@@ -2,7 +2,7 @@ suite: Ingress
 templates:
   - templates/ingress.yaml
 values:
-  - ci/default-values.yaml
+  - ../ci/default-values.yaml
 tests:
   - it: should not create Ingress by default
     asserts:

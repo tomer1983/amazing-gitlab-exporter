@@ -2,7 +2,7 @@ suite: Service
 templates:
   - templates/service.yaml
 values:
-  - ci/default-values.yaml
+  - ../ci/default-values.yaml
 tests:
   - it: should create a Service
     asserts:

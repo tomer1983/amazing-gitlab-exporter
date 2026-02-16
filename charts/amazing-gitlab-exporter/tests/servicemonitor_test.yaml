@@ -2,7 +2,7 @@ suite: ServiceMonitor
 templates:
   - templates/servicemonitor.yaml
 values:
-  - ci/default-values.yaml
+  - ../ci/default-values.yaml
 tests:
   - it: should not create ServiceMonitor by default
     asserts:
