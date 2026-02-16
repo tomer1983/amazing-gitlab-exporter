@@ -1,0 +1,10 @@
+# CI Values: Default / Minimal deployment
+# Validates: Basic single-replica deployment with minimum configuration
+secrets:
+  gitlabToken: "glpat-test-token-for-ci"
+
+exporterConfig:
+  gitlab_url: "https://gitlab.example.com"
+  projects:
+    - "my-group/my-project"
+  collection_interval: 300

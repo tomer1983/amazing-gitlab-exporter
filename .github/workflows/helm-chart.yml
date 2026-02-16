@@ -1,0 +1,252 @@
+name: Helm Chart CI/CD
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'charts/**'
+      - '.github/workflows/helm-chart.yml'
+    tags:
+      - 'chart-*'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'charts/**'
+      - '.github/workflows/helm-chart.yml'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  lint:
+    name: Lint Chart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+
+      - name: Lint chart
+        run: |
+          helm lint charts/amazing-gitlab-exporter \
+            --set secrets.gitlabToken=test \
+            --set exporterConfig.gitlab_url=https://gitlab.com \
+            --set 'exporterConfig.projects={test/proj}'
+
+  template-test:
+    name: Template Test (${{ matrix.values }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        values:
+          - default
+          - ha
+          - full-stack
+          - openshift
+          - full
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+
+      - name: Build dependencies
+        run: helm dependency build charts/amazing-gitlab-exporter
+
+      - name: Template rendering test
+        run: |
+          helm template test charts/amazing-gitlab-exporter \
+            -f charts/amazing-gitlab-exporter/ci/${{ matrix.values }}-values.yaml \
+            --debug > /tmp/rendered-${{ matrix.values }}.yaml
+          
+          # Verify YAML is valid
+          kubectl apply --dry-run=client -f /tmp/rendered-${{ matrix.values }}.yaml
+
+      - name: Upload rendered manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-${{ matrix.values }}
+          path: /tmp/rendered-${{ matrix.values }}.yaml
+          retention-days: 7
+
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+
+      - name: Install helm-unittest plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest
+
+      - name: Run unit tests
+        run: helm unittest charts/amazing-gitlab-exporter --color
+
+  schema-validation:
+    name: JSON Schema Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install AJV
+        run: npm install -g ajv-cli
+
+      - name: Validate values against schema
+        run: |
+          for values_file in charts/amazing-gitlab-exporter/ci/*.yaml; do
+            echo "Validating $values_file"
+            ajv validate \
+              -s charts/amazing-gitlab-exporter/values.schema.json \
+              -d "$values_file" \
+              --strict=false \
+              || echo "Warning: $values_file failed schema validation"
+          done
+
+  package:
+    name: Package Chart
+    runs-on: ubuntu-latest
+    needs: [lint, template-test, unit-test]
+    if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/chart-') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+
+      - name: Build dependencies
+        run: helm dependency build charts/amazing-gitlab-exporter
+
+      - name: Package chart
+        run: |
+          helm package charts/amazing-gitlab-exporter
+          ls -lh amazing-gitlab-exporter-*.tgz
+
+      - name: Upload packaged chart
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-chart
+          path: amazing-gitlab-exporter-*.tgz
+          retention-days: 30
+
+  publish:
+    name: Publish Chart
+    runs-on: ubuntu-latest
+    needs: [package]
+    if: startsWith(github.ref, 'refs/tags/chart-')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+
+      - name: Download packaged chart
+        uses: actions/download-artifact@v4
+        with:
+          name: helm-chart
+
+      - name: Extract chart version
+        id: chart
+        run: |
+          VERSION=$(grep '^version:' charts/amazing-gitlab-exporter/Chart.yaml | awk '{print $2}')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Chart version: $VERSION"
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
+            --username ${{ github.actor }} \
+            --password-stdin
+
+      - name: Push chart to GHCR
+        run: |
+          helm push amazing-gitlab-exporter-*.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Helm Chart v${{ steps.chart.outputs.version }}"
+          body: |
+            # Amazing GitLab Exporter Helm Chart v${{ steps.chart.outputs.version }}
+
+            ## Installation
+
+            ```bash
+            helm install my-exporter oci://ghcr.io/${{ github.repository_owner }}/charts/amazing-gitlab-exporter \
+              --version ${{ steps.chart.outputs.version }} \
+              --set secrets.gitlabToken="<your-token>" \
+              --set exporterConfig.gitlab_url="https://gitlab.example.com" \
+              --set exporterConfig.projects[0]="group/project"
+            ```
+
+            ## Changes
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/chart-${{ steps.chart.outputs.version }}/charts/amazing-gitlab-exporter/CHANGELOG.md) for details.
+
+            ## Documentation
+
+            - [Chart README](https://github.com/${{ github.repository }}/blob/chart-${{ steps.chart.outputs.version }}/charts/amazing-gitlab-exporter/README.md)
+            - [Values Reference](https://github.com/${{ github.repository }}/blob/chart-${{ steps.chart.outputs.version }}/charts/amazing-gitlab-exporter/values.yaml)
+          files: amazing-gitlab-exporter-*.tgz
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+      - name: Logout from GHCR
+        if: always()
+        run: helm registry logout ghcr.io
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: charts/amazing-gitlab-exporter
+          framework: helm
+          soft_fail: true
+
+      - name: Run Trivy for misconfigurations
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: 'charts/amazing-gitlab-exporter'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'

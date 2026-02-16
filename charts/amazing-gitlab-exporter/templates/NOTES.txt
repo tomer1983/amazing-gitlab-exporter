@@ -1,0 +1,54 @@
+🎉 amazing-gitlab-exporter has been deployed!
+
+{{- $fullname := include "amazing-gitlab-exporter.fullname" . }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 Exporter Metrics:
+{{- if .Values.ingress.enabled }}
+  {{- range .Values.ingress.hosts }}
+  http://{{ .host }}/metrics
+  {{- end }}
+{{- else if .Values.route.enabled }}
+  The OpenShift Route will expose the metrics endpoint externally.
+  Run: kubectl get route {{ $fullname }} -n {{ .Release.Namespace }}
+{{- else }}
+  kubectl port-forward svc/{{ $fullname }} 8080:{{ .Values.service.port }} -n {{ .Release.Namespace }}
+  Then visit: http://localhost:8080/metrics
+{{- end }}
+
+🏥 Health Check:
+  curl http://localhost:8080/health
+
+✅ Readiness Check:
+  curl http://localhost:8080/ready
+{{- if .Values.prometheus.enabled }}
+
+📈 Prometheus:
+  kubectl port-forward svc/{{ .Release.Name }}-prometheus-server 9090:80 -n {{ .Release.Namespace }}
+  Then visit: http://localhost:9090
+{{- end }}
+{{- if .Values.grafana.enabled }}
+
+📊 Grafana:
+  kubectl port-forward svc/{{ .Release.Name }}-grafana 3000:80 -n {{ .Release.Namespace }}
+  Then visit: http://localhost:3000
+  Default credentials: admin / {{ .Values.grafana.adminPassword | default "admin" }}
+  All 7 dashboards are pre-provisioned.
+{{- end }}
+{{- if .Values.serviceMonitor.enabled }}
+
+🔍 ServiceMonitor:
+  A ServiceMonitor has been created for Prometheus Operator auto-discovery.
+{{- end }}
+{{- if or .Values.redis.enabled (ne (default "" .Values.externalRedis.url) "") }}
+
+🔄 HA Mode:
+  Redis is {{ if .Values.redis.enabled }}deployed as a sub-chart{{ else }}configured externally{{ end }}.
+  Multiple replicas share state via Redis.
+{{- end }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 Run tests:  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+📖 Docs:       https://github.com/tomer1983/amazing-gitlab-exporter
