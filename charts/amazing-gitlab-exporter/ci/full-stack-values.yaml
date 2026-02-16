@@ -1,7 +1,6 @@
 # CI Values: Full Stack
 # Validates: Prometheus + Grafana sub-charts, dashboards
-secrets:
-  gitlabToken: "glpat-test-token-for-ci"
+gitlabToken: "glpat-test-token-for-ci"
 
 exporterConfig:
   gitlab_url: "https://gitlab.example.com"

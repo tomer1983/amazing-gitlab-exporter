@@ -2,8 +2,7 @@
 # Validates: Redis sub-chart, 3 replicas, PDB, autoscaling
 replicaCount: 3
 
-secrets:
-  gitlabToken: "glpat-test-token-for-ci"
+gitlabToken: "glpat-test-token-for-ci"
 
 exporterConfig:
   gitlab_url: "https://gitlab.example.com"

@@ -1,7 +1,6 @@
 # CI Values: OpenShift
 # Validates: Route, no hardcoded UID, restricted SCC compatibility
-secrets:
-  gitlabToken: "glpat-test-token-for-ci"
+gitlabToken: "glpat-test-token-for-ci"
 
 exporterConfig:
   gitlab_url: "https://gitlab.example.com"

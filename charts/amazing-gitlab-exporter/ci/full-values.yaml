@@ -2,9 +2,8 @@
 # Validates: Every feature flag is turned on for maximum template coverage
 replicaCount: 3
 
-secrets:
-  gitlabToken: "glpat-test-token-for-ci"
-  webhookSecret: "test-webhook-secret"
+gitlabToken: "glpat-test-token-for-ci"
+webhookSecretToken: "test-webhook-secret"
 
 exporterConfig:
   gitlab_url: "https://gitlab.example.com"
