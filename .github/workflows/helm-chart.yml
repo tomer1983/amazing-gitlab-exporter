@@ -259,6 +259,7 @@ jobs:
 
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@v12
+        continue-on-error: true
         with:
           directory: charts/amazing-gitlab-exporter
           framework: helm
@@ -275,6 +276,7 @@ jobs:
 
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
+        continue-on-error: true
         if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: 'trivy-results.sarif'

@@ -2,7 +2,7 @@ suite: PodDisruptionBudget
 templates:
   - templates/pdb.yaml
 values:
-  - ../ci/default-values.yaml
+  - ci/default-values.yaml
 tests:
   - it: should not create PDB by default
     asserts:
