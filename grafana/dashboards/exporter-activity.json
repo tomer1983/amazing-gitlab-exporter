@@ -111,7 +111,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "count(age_collector_enabled == 1)",
+          "expr": "count(age_collector_enabled{job=\"amazing-gitlab-exporter\"} == 1)",
           "legendFormat": "",
           "refId": "A",
           "instant": true
@@ -149,7 +149,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "age_projects_tracked",
+          "expr": "age_projects_tracked{job=\"amazing-gitlab-exporter\"}",
           "legendFormat": "",
           "refId": "A",
           "instant": true
@@ -186,7 +186,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "age_gitlab_tier",
+          "expr": "age_gitlab_tier{job=\"amazing-gitlab-exporter\"}",
           "legendFormat": "",
           "refId": "A",
           "instant": true
@@ -264,7 +264,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "age_scrape_duration_seconds{collector_type=~\"$collector_type\"}",
+          "expr": "age_scrape_duration_seconds{job=\"amazing-gitlab-exporter\", collector_type=~\"$collector_type\"}",
           "legendFormat": "{{collector_type}}",
           "refId": "A"
         }
@@ -299,7 +299,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "age_scrape_errors_total{collector_type=~\"$collector_type\"}",
+          "expr": "increase(age_scrape_errors_total{job=\"amazing-gitlab-exporter\", collector_type=~\"$collector_type\"}[$__rate_interval])",
           "legendFormat": "{{collector_type}}",
           "refId": "A"
         }
@@ -331,7 +331,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "rate(age_api_requests_total{job=\"amazing-gitlab-exporter\"}[5m])",
+          "expr": "rate(age_api_requests_total{job=\"amazing-gitlab-exporter\"}[$__rate_interval])",
           "legendFormat": "{{endpoint}} {{status_code}}",
           "refId": "A"
         }
@@ -369,12 +369,12 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "rate(age_api_request_duration_seconds_sum[5m]) / rate(age_api_request_duration_seconds_count[5m])",
+          "expr": "rate(age_api_request_duration_seconds_sum{job=\"amazing-gitlab-exporter\"}[$__rate_interval]) / rate(age_api_request_duration_seconds_count{job=\"amazing-gitlab-exporter\"}[$__rate_interval])",
           "legendFormat": "{{endpoint}}",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.99, rate(age_api_request_duration_seconds_bucket[5m]))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(age_api_request_duration_seconds_bucket{job=\"amazing-gitlab-exporter\"}[$__rate_interval])))",
           "legendFormat": "p99 {{endpoint}}",
           "refId": "B"
         }
@@ -456,7 +456,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "rate(process_cpu_seconds_total{job=\"amazing-gitlab-exporter\"}[5m])",
+          "expr": "rate(process_cpu_seconds_total{job=\"amazing-gitlab-exporter\"}[$__rate_interval])",
           "legendFormat": "CPU Usage",
           "refId": "A"
         }
@@ -490,7 +490,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "rate(go_gc_duration_seconds_sum{job=\"amazing-gitlab-exporter\"}[5m])",
+          "expr": "rate(go_gc_duration_seconds_sum{job=\"amazing-gitlab-exporter\"}[$__rate_interval])",
           "legendFormat": "GC Duration Rate",
           "refId": "A"
         }
@@ -524,7 +524,7 @@
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
       "targets": [
         {
-          "expr": "age_collector_enabled",
+          "expr": "age_collector_enabled{job=\"amazing-gitlab-exporter\"}",
           "legendFormat": "",
           "refId": "A",
           "format": "table",
@@ -666,7 +666,7 @@
       }
     ]
   },
-  "time": { "from": "now-6h", "to": "now" },
+  "time": { "from": "now-24h", "to": "now" },
   "timepicker": {},
   "refresh": "30s",
   "schemaVersion": 39,
