@@ -1,0 +1,25 @@
+{{- if .Values.prometheus.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "amazing-gitlab-exporter.fullname" . }}-prometheus-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "amazing-gitlab-exporter.labels" . | nindent 4 }}
+    app.kubernetes.io/component: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: {{ .Values.prometheus.server.global.scrape_interval | default "30s" }}
+      evaluation_interval: {{ .Values.prometheus.server.global.evaluation_interval | default "30s" }}
+
+    scrape_configs:
+      # Scrape the exporter
+      - job_name: '{{ include "amazing-gitlab-exporter.fullname" . }}'
+        scrape_interval: {{ .Values.serviceMonitor.interval | default "30s" }}
+        static_configs:
+          - targets: ['{{ include "amazing-gitlab-exporter.fullname" . }}:{{ .Values.service.port }}']
+            labels:
+              app: amazing-gitlab-exporter
+              release: {{ .Release.Name }}
+{{- end }}

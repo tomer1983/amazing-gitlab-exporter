@@ -1,0 +1,56 @@
+suite: Ingress
+templates:
+  - templates/ingress.yaml
+values:
+  - ../ci/default-values.yaml
+tests:
+  - it: should not create Ingress by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create Ingress when enabled
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: exporter.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: spec.rules[0].host
+          value: "exporter.example.com"
+
+  - it: should set ingressClassName
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      ingress.hosts:
+        - host: exporter.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+
+  - it: should configure TLS
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: exporter.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+      ingress.tls:
+        - secretName: exporter-tls
+          hosts:
+            - exporter.example.com
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: exporter-tls

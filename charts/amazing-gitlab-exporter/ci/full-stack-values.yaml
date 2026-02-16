@@ -1,0 +1,57 @@
+# CI Values: Full Stack
+# Validates: Prometheus + Grafana sub-charts, dashboards
+secrets:
+  gitlabToken: "glpat-test-token-for-ci"
+
+exporterConfig:
+  gitlab_url: "https://gitlab.example.com"
+  projects:
+    - "my-group/my-project"
+  collection_interval: 300
+
+prometheus:
+  enabled: true
+  server:
+    persistentVolume:
+      enabled: false
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  alertmanager:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+
+grafana:
+  enabled: true
+  persistence:
+    enabled: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+
+grafanaDashboards:
+  enabled: true
+  labels:
+    grafana_dashboard: "1"
