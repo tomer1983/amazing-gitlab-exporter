@@ -3,7 +3,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: {{ include "amazing-gitlab-exporter.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Release.Namespace | default "amazing-gitlab-exporter" }}
   labels:
     {{- include "amazing-gitlab-exporter.labels" . | nindent 4 }}
 spec:
