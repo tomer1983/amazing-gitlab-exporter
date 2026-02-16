@@ -42,3 +42,6 @@ Thumbs.db
 *.tmp
 *.bak
 *.log
+
+# vibe coding plans
+docs/plans/*.md
