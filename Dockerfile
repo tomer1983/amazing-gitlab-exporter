@@ -21,7 +21,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build \
 # Runtime stage
 FROM gcr.io/distroless/static:nonroot
 
-LABEL org.opencontainers.image.source="https://github.com/amazing-gitlab-exporter/amazing-gitlab-exporter"
+LABEL org.opencontainers.image.source="https://github.com/tomer1983/amazing-gitlab-exporter"
 LABEL org.opencontainers.image.description="Prometheus exporter for GitLab CI/CD analytics"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 

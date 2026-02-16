@@ -17,6 +17,7 @@ on:
 permissions:
   contents: write
   packages: write
+  security-events: write
 
 jobs:
   lint:
@@ -119,19 +120,23 @@ jobs:
 
       - name: Validate values against schema
         run: |
+          FAILED=0
           for values_file in charts/amazing-gitlab-exporter/ci/*.yaml; do
             echo "Validating $values_file"
-            ajv validate \
+            if ! ajv validate \
               -s charts/amazing-gitlab-exporter/values.schema.json \
               -d "$values_file" \
-              --strict=false \
-              || echo "Warning: $values_file failed schema validation"
+              --strict=false; then
+              echo "::error::$values_file failed schema validation"
+              FAILED=1
+            fi
           done
+          exit $FAILED
 
   package:
     name: Package Chart
     runs-on: ubuntu-latest
-    needs: [lint, template-test, unit-test]
+    needs: [lint, template-test, unit-test, schema-validation]
     if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/chart-') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     steps:
       - name: Checkout code
@@ -250,7 +255,7 @@ jobs:
           soft_fail: true
 
       - name: Run Trivy for misconfigurations
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: 'config'
           scan-ref: 'charts/amazing-gitlab-exporter'
