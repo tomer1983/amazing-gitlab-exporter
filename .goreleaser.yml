@@ -69,7 +69,7 @@ changelog:
 
 release:
   github:
-    owner: amazing-gitlab-exporter
+    owner: tomer1983
     name: amazing-gitlab-exporter
   prerelease: auto
   name_template: "{{.Tag}}"
