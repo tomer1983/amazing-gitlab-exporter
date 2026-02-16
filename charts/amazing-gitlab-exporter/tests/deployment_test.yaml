@@ -1,8 +1,6 @@
 suite: Deployment
 templates:
   - templates/deployment.yaml
-  - templates/configmap.yaml
-  - templates/secret.yaml
 values:
   - ../ci/default-values.yaml
 tests:
@@ -70,6 +68,7 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: AGE_REDIS_URL
+            value: "redis://:@RELEASE-NAME-redis-master:6379/0"
 
   - it: should mount config volume
     asserts:
