@@ -1,0 +1,52 @@
+suite: HPA
+templates:
+  - templates/hpa.yaml
+values:
+  - ../ci/default-values.yaml
+tests:
+  - it: should not create HPA by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create HPA when autoscaling enabled
+    set:
+      autoscaling.enabled: true
+      autoscaling.minReplicas: 2
+      autoscaling.maxReplicas: 10
+      autoscaling.targetCPUUtilizationPercentage: 75
+    asserts:
+      - isKind:
+          of: HorizontalPodAutoscaler
+      - equal:
+          path: spec.minReplicas
+          value: 2
+      - equal:
+          path: spec.maxReplicas
+          value: 10
+
+  - it: should configure memory metric
+    set:
+      autoscaling.enabled: true
+      autoscaling.targetMemoryUtilizationPercentage: 80
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: memory
+              target:
+                type: Utilization
+                averageUtilization: 80
+
+  - it: should configure behavior
+    set:
+      autoscaling.enabled: true
+      autoscaling.behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+    asserts:
+      - equal:
+          path: spec.behavior.scaleDown.stabilizationWindowSeconds
+          value: 300

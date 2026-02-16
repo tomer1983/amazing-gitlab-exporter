@@ -1,0 +1,27 @@
+suite: NetworkPolicy
+templates:
+  - templates/networkpolicy.yaml
+values:
+  - ../ci/default-values.yaml
+tests:
+  - it: should not create NetworkPolicy by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create NetworkPolicy when enabled
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.ingress:
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: monitoring
+          ports:
+            - protocol: TCP
+              port: 8080
+    asserts:
+      - isKind:
+          of: NetworkPolicy
+      - isNotNull:
+          path: spec.ingress

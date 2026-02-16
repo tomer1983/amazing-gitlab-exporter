@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "amazing-gitlab-exporter.fullname" . }}-test-metrics"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "amazing-gitlab-exporter.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: curl
+      image: curlimages/curl:8.5.0
+      command: ['sh', '-c']
+      args:
+        - |
+          response=$(curl -sf http://{{ include "amazing-gitlab-exporter.fullname" . }}:{{ .Values.service.port }}/metrics)
+          if echo "$response" | grep -q "# HELP"; then
+            echo "Metrics endpoint is returning Prometheus format"
+            exit 0
+          else
+            echo "ERROR: Metrics endpoint did not return expected format"
+            exit 1
+          fi
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 65534
+        capabilities:
+          drop: [ALL]

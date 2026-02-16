@@ -1,0 +1,39 @@
+# CI Values: HA Mode
+# Validates: Redis sub-chart, 3 replicas, PDB, autoscaling
+replicaCount: 3
+
+secrets:
+  gitlabToken: "glpat-test-token-for-ci"
+
+exporterConfig:
+  gitlab_url: "https://gitlab.example.com"
+  projects:
+    - "my-group/my-project"
+  collection_interval: 300
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 75
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

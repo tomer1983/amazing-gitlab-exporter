@@ -1,0 +1,21 @@
+suite: ConfigMap
+templates:
+  - templates/configmap.yaml
+values:
+  - ../ci/default-values.yaml
+tests:
+  - it: should create a ConfigMap
+    asserts:
+      - isKind:
+          of: ConfigMap
+
+  - it: should contain config.yml key
+    asserts:
+      - isNotNull:
+          path: data["config.yml"]
+
+  - it: should render gitlab_url from values
+    asserts:
+      - matchRegex:
+          path: data["config.yml"]
+          pattern: "gitlab_url.*gitlab\\.example\\.com"

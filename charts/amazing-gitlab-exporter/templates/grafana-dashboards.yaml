@@ -1,0 +1,36 @@
+{{- if (include "amazing-gitlab-exporter.dashboardsEnabled" .) }}
+{{- $fullName := include "amazing-gitlab-exporter.fullname" . -}}
+{{- $labels := include "amazing-gitlab-exporter.labels" . -}}
+{{- $dashboardLabels := .Values.grafanaDashboards.labels -}}
+{{- $dashboardAnnotations := .Values.grafanaDashboards.annotations -}}
+{{- $namespace := .Values.grafanaDashboards.namespace | default .Release.Namespace -}}
+{{- $dashboards := dict
+  "ci-cd-analytics" "dashboards/ci-cd-analytics.json"
+  "dora-metrics" "dashboards/dora-metrics.json"
+  "exporter-activity" "dashboards/exporter-activity.json"
+  "job-performance" "dashboards/job-performance.json"
+  "merge-request-analytics" "dashboards/merge-request-analytics.json"
+  "pipeline-overview" "dashboards/pipeline-overview.json"
+  "repository-analytics" "dashboards/repository-analytics.json"
+-}}
+{{- range $name, $path := $dashboards }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $fullName }}-dashboard-{{ $name }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- $labels | nindent 4 }}
+    {{- with $dashboardLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $dashboardAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  {{ $name }}.json: |-
+    {{- $.Files.Get $path | nindent 4 }}
+{{- end }}
+{{- end }}

@@ -89,6 +89,40 @@ AGE_GITLAB_TOKEN=glpat-xxx \
 ./amazing-gitlab-exporter run
 ```
 
+### Kubernetes / Helm Chart
+
+Production-ready Helm chart with full observability stack (Prometheus + Grafana + Redis):
+
+```bash
+# Add Helm repository
+helm repo add amazing-gitlab-exporter https://tomer1983.github.io/amazing-gitlab-exporter
+helm repo update
+
+# Install with minimal configuration
+helm install my-exporter amazing-gitlab-exporter/amazing-gitlab-exporter \
+  --set secrets.gitlabToken="<your-gitlab-token>" \
+  --set exporterConfig.gitlab_url="https://gitlab.example.com" \
+  --set exporterConfig.projects[0]="my-group/my-project"
+
+# Or install with full monitoring stack
+helm install my-exporter amazing-gitlab-exporter/amazing-gitlab-exporter \
+  --set secrets.gitlabToken="<your-gitlab-token>" \
+  --set exporterConfig.gitlab_url="https://gitlab.example.com" \
+  --set exporterConfig.projects[0]="my-group/my-project" \
+  --set prometheus.enabled=true \
+  --set grafana.enabled=true \
+  --set grafanaDashboards.enabled=true
+```
+
+**Features:**
+- ✅ Kubernetes 1.25+ and OpenShift 4.12+ support
+- 🔐 Security hardened (non-root, read-only rootfs, restricted PSS)
+- 📊 Optional Prometheus, Grafana, and Redis sub-charts
+- 📈 7 pre-configured Grafana dashboards
+- 🚀 Production ready (HPA, PDB, ServiceMonitor, NetworkPolicy)
+
+**Documentation:** [charts/amazing-gitlab-exporter/README.md](charts/amazing-gitlab-exporter/README.md)
+
 ---
 
 ## Configuration
