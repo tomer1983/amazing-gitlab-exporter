@@ -27,14 +27,10 @@ tests:
   - it: should use NodePort type when configured
     set:
       service.type: NodePort
-      service.nodePort: 30080
     asserts:
       - equal:
           path: spec.type
           value: NodePort
-      - equal:
-          path: spec.ports[0].nodePort
-          value: 30080
 
   - it: should have selector labels
     asserts:

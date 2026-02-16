@@ -1,6 +1,8 @@
 suite: Deployment
 templates:
   - templates/deployment.yaml
+  - templates/configmap.yaml
+  - templates/secret.yaml
 values:
   - ../ci/default-values.yaml
 tests:
