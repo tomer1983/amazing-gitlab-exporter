@@ -14,8 +14,14 @@ tests:
       - isNotNull:
           path: data["config.yml"]
 
-  - it: should render gitlab_url from values
+  - it: should render gitlab url from values
     asserts:
       - matchRegex:
           path: data["config.yml"]
-          pattern: "gitlab_url.*gitlab\\.example\\.com"
+          pattern: "url:.*https://gitlab\\.example\\.com"
+
+  - it: should not contain default gitlab.com url when custom url is set
+    asserts:
+      - notMatchRegex:
+          path: data["config.yml"]
+          pattern: "url:.*https://gitlab\\.com"

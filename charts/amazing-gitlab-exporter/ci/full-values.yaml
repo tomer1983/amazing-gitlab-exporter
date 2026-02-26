@@ -6,11 +6,11 @@ gitlabToken: "glpat-test-token-for-ci"
 webhookSecretToken: "test-webhook-secret"
 
 exporterConfig:
-  gitlab_url: "https://gitlab.example.com"
+  gitlab:
+    url: "https://gitlab.example.com"
   projects:
     - "my-group/my-project"
     - "my-group/another-project"
-  collection_interval: 300
 
 serviceAccount:
   create: true

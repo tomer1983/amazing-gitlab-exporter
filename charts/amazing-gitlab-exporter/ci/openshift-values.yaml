@@ -3,10 +3,10 @@
 gitlabToken: "glpat-test-token-for-ci"
 
 exporterConfig:
-  gitlab_url: "https://gitlab.example.com"
+  gitlab:
+    url: "https://gitlab.example.com"
   projects:
     - "my-group/my-project"
-  collection_interval: 300
 
 route:
   enabled: true
