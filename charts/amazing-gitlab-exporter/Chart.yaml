@@ -3,7 +3,7 @@ name: amazing-gitlab-exporter
 description: A Helm chart for deploying the Amazing GitLab Exporter — a Prometheus exporter for GitLab CI/CD analytics
 type: application
 version: 1.0.0
-appVersion: "v1.0.1"
+appVersion: "v1.0.3"
 kubeVersion: ">=1.25.0-0"
 
 home: https://github.com/tomer1983/amazing-gitlab-exporter
