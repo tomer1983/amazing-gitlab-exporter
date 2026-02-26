@@ -36,7 +36,7 @@ jobs:
         run: |
           helm lint charts/amazing-gitlab-exporter \
             --set gitlabToken=test \
-            --set exporterConfig.gitlab_url=https://gitlab.com \
+            --set exporterConfig.gitlab.url=https://gitlab.example.com \
             --set 'exporterConfig.projects={test/proj}'
 
   template-test:
@@ -87,6 +87,40 @@ jobs:
               name = doc.get('metadata', {}).get('name', 'unknown')
               print(f'  {kind}/{name}')
           " /tmp/rendered-${{ matrix.values }}.yaml
+
+      - name: Validate GitLab URL is set from values
+        run: |
+          python3 - <<'EOF'
+          import yaml, sys
+
+          with open("/tmp/rendered-${{ matrix.values }}.yaml") as f:
+              docs = list(yaml.safe_load_all(f))
+
+          configmap = next(
+              (d for d in docs if d and d.get("kind") == "ConfigMap"
+               and d.get("metadata", {}).get("name", "").endswith("-config")),
+              None,
+          )
+          if configmap is None:
+              print("ERROR: ConfigMap not found in rendered output")
+              sys.exit(1)
+
+          config_yml = configmap.get("data", {}).get("config.yml", "")
+          config = yaml.safe_load(config_yml)
+          gitlab_url = config.get("gitlab", {}).get("url", "")
+
+          print(f"GitLab URL in ConfigMap: {gitlab_url}")
+
+          if not gitlab_url:
+              print("ERROR: gitlab.url is empty in ConfigMap")
+              sys.exit(1)
+
+          if gitlab_url == "https://gitlab.com":
+              print("ERROR: gitlab.url is still the default 'https://gitlab.com'; custom URL was not applied")
+              sys.exit(1)
+
+          print(f"OK: Custom GitLab URL '{gitlab_url}' is correctly set in the ConfigMap")
+          EOF
 
       - name: Upload rendered manifests
         uses: actions/upload-artifact@v4
